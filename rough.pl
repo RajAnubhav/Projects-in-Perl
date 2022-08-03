@@ -2,6 +2,8 @@
 use Excel::Writer::XLSX;
 use Spreadsheet::WriteExcel;
 use Spreadsheet::ParseExcel;
+use Spreadsheet::ParseExcel::SaveParser;
+use Spreadsheet::ParseXLSX;
 use Switch::Plain;
 sub input_names{
     # writing into the file
@@ -10,8 +12,8 @@ sub input_names{
     $i=0;
     $writeTo=0;
     # printing into the excell sheet
-    my $Excelbook = Excel::Writer::XLSX->new( './atnd.xls' );
-    my $Excelsheet = $Excelbook->add_worksheet("Atnd Sheet");
+    my $Excelbook = Excel::Writer::XLSX->new( './atnd.xlsx' );
+    my $Excelsheet = $Excelbook->add_worksheet();
     $Excelsheet->write($writeTo++,0,"Names" );
     while($count > 0){
         $i++;
@@ -25,74 +27,33 @@ sub input_names{
 }
 sub append_names{
     #to append new names
+
+
     use Text::Iconv;
-my $converter = Text::Iconv->new("utf-8", "windows-1251");
- 
-# Text::Iconv is not really required.
-# This can be any object with the convert method. Or nothing.
- 
-use Spreadsheet::XLSX;
- 
-my $excel = Spreadsheet::XLSX->new('atnd.xlsx', $converter);
- 
-foreach my $sheet (@{$excel->{Worksheet}}) {
- 
-    printf("Sheet: %s\n", $sheet->{Name});
-     
-    $sheet->{MaxRow} ||= $sheet->{MinRow};
-     
-    foreach my $row ($sheet->{MinRow} .. $sheet->{MaxRow}) {
-          
-        $sheet->{MaxCol} ||= $sheet->{MinCol};
-         
-        foreach my $col ($sheet->{MinCol} ..  $sheet->{MaxCol}) {
-         
-            my $cell = $sheet->{Cells}[$row][$col];
-     
-            if ($cell) {
-                printf("( %s , %s ) => %s\n", $row, $col, $cell->{Val});
-            }
-     
-        }
-     
+    my $converter = Text::Iconv->new("utf-8", "windows-1251");
+    # Text::Iconv is not really required.
+    # This can be any object with the convert method. Or nothing.
+    use Spreadsheet::XLSX;
+    my $excel = Spreadsheet::XLSX->new('atnd.xlsx', $converter);
+    my $sheet =(@{$excel->{Worksheet}})[0]; 
+    my $writeStart=($sheet->{MaxRow})+1;
+
+    print "Enter the number of names to insert : ";
+    chomp($count = <STDIN>);
+    $i=0;
+    $writeTo=$writeStart;
+    # printing into the excell sheet
+    my $Excelbook = Excel::Writer::XLSX->new( './atnd.xlsx' );
+    my $Excelsheet = ($Excelbook->sheets(0));
+    while($count > 0){
+        $i++;
+        print "Enter your name $i : ";
+        chomp ($firstName = <STDIN>);
+        $Excelsheet->write($writeTo++,0, $firstName );    
+        $count --;
     }
- 
-}
-    # 
-    # use Spreadsheet::ParseExcel;
-    # my $parser   = Spreadsheet::ParseExcel->new();
-    # my $workbook = $parser->parse('./atnd.xls');
- 
-    # if ( !defined $workbook ) {
-    #     die $parser->error(), ".\n";
-    # }
+    $Excelbook->close();
     
-    # for my $worksheet ( $workbook->worksheets() ) {
-    
-    #     my ( $row_min, $row_max ) = $worksheet->row_range();
-    #     my ( $col_min, $col_max ) = $worksheet->col_range();
-    
-    #     for my $row ( $row_min .. $row_max ) {
-    #         for my $col ( $col_min .. $col_max ) {
-    
-    #             my $cell = $worksheet->get_cell( $row, $col );
-    #             next unless $cell;
-    
-    #             print "Row, Col    = ($row, $col)\n";
-    #             print "Value       = ", $cell->value(),       "\n";
-    #             print "Unformatted = ", $cell->unformatted(), "\n";
-    #             print "\n";
-    #         }
-    #     }
-    # }
-    # my $parser=Spreadsheet::ParseExcel->new();
-    # my $Excelbook = $parser->parse('atnd.xlsx');
-    # for my $worksheet (@{$Excelbook->worksheets() }) {
-    #     my $cell = $worksheet->get_cell(0,0);
-    #     print "$cell";
-    # }
-    # my $sheet = $Excelbook->worksheet(1);
-    # print "$sheet";
 }
 sub take_atnd{
     #add attendance to the file
@@ -118,8 +79,6 @@ sub atnd_count{
     # read and calculate atendance
 }
 
-my $ch = 1;
-my @attend;
 while($ch){
     print "======================================================================\n";
     print "Enter \n1: enter name list\n2: append names\n3: take attendance\n4: atnd count\n5: exit\n";
