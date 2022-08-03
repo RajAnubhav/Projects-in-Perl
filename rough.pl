@@ -2,88 +2,138 @@
 use Excel::Writer::XLSX;
 use Spreadsheet::WriteExcel;
 use Spreadsheet::ParseExcel;
-
-package Person;
-sub new{
-    my $class => shift;
-    my $self = {
-        _firstName => shift,
-        _ssn => shift,
-    };
-
-    open(fh, ">>", "./Book1.xlsx");
-    $a = "$self->{'_firstName'}$self->{'_ssn'}\n";
-    print fh $a;
-    close(fh) or "couldn't close the file";
-
-    bless $self, $class;
-    return $self;
+use Switch::Plain;
+sub input_names{
+    # writing into the file
+    print "Enter the number of names you want to enter : ";
+    chomp($count = <STDIN>);
+    $i=0;
+    $writeTo=0;
+    # printing into the excell sheet
+    my $Excelbook = Excel::Writer::XLSX->new( './atnd.xls' );
+    my $Excelsheet = $Excelbook->add_worksheet("Atnd Sheet");
+    $Excelsheet->write($writeTo++,0,"Names" );
+    while($count > 0){
+        $i++;
+        print "Enter your name $i : ";
+        chomp ($firstName = <STDIN>);
+        # Writing values at A1 and A2
+        $Excelsheet->write($writeTo++,0, $firstName );    
+        $count --;
+    }
+    $Excelbook->close();
+}
+sub append_names{
+    #to append new names
+    use Text::Iconv;
+my $converter = Text::Iconv->new("utf-8", "windows-1251");
+ 
+# Text::Iconv is not really required.
+# This can be any object with the convert method. Or nothing.
+ 
+use Spreadsheet::XLSX;
+ 
+my $excel = Spreadsheet::XLSX->new('atnd.xlsx', $converter);
+ 
+foreach my $sheet (@{$excel->{Worksheet}}) {
+ 
+    printf("Sheet: %s\n", $sheet->{Name});
+     
+    $sheet->{MaxRow} ||= $sheet->{MinRow};
+     
+    foreach my $row ($sheet->{MinRow} .. $sheet->{MaxRow}) {
+          
+        $sheet->{MaxCol} ||= $sheet->{MinCol};
+         
+        foreach my $col ($sheet->{MinCol} ..  $sheet->{MaxCol}) {
+         
+            my $cell = $sheet->{Cells}[$row][$col];
+     
+            if ($cell) {
+                printf("( %s , %s ) => %s\n", $row, $col, $cell->{Val});
+            }
+     
+        }
+     
+    }
+ 
+}
+    # 
+    # use Spreadsheet::ParseExcel;
+    # my $parser   = Spreadsheet::ParseExcel->new();
+    # my $workbook = $parser->parse('./atnd.xls');
+ 
+    # if ( !defined $workbook ) {
+    #     die $parser->error(), ".\n";
+    # }
+    
+    # for my $worksheet ( $workbook->worksheets() ) {
+    
+    #     my ( $row_min, $row_max ) = $worksheet->row_range();
+    #     my ( $col_min, $col_max ) = $worksheet->col_range();
+    
+    #     for my $row ( $row_min .. $row_max ) {
+    #         for my $col ( $col_min .. $col_max ) {
+    
+    #             my $cell = $worksheet->get_cell( $row, $col );
+    #             next unless $cell;
+    
+    #             print "Row, Col    = ($row, $col)\n";
+    #             print "Value       = ", $cell->value(),       "\n";
+    #             print "Unformatted = ", $cell->unformatted(), "\n";
+    #             print "\n";
+    #         }
+    #     }
+    # }
+    # my $parser=Spreadsheet::ParseExcel->new();
+    # my $Excelbook = $parser->parse('atnd.xlsx');
+    # for my $worksheet (@{$Excelbook->worksheets() }) {
+    #     my $cell = $worksheet->get_cell(0,0);
+    #     print "$cell";
+    # }
+    # my $sheet = $Excelbook->worksheet(1);
+    # print "$sheet";
+}
+sub take_atnd{
+    #add attendance to the file
+    print "Enter the date : ";
+    chomp($date = <STDIN>);
+    $i=0;
+    $writeTo=0;
+    # printing into the excell sheet
+    my $Excelbook = Excel::Writer::XLSX->new( './atnd.xls' );
+    my $Excelsheet = $Excelbook->add_worksheet("Atnd Sheet");
+    $Excelsheet->write($writeTo++,0,"Names" );
+    while($count > 0){
+        $i++;
+        print "Enter your name $i : ";
+        chomp ($firstName = <STDIN>);
+        # Writing values at A1 and A2
+        $Excelsheet->write($writeTo++,0, $firstName );    
+        $count --;
+    }
+    $Excelbook->close();
+}
+sub atnd_count{
+    # read and calculate atendance
 }
 
 my $ch = 1;
 my @attend;
-
 while($ch){
-    print "Enter \n 1: for entering into datasheet\n 2: Check record\n 3: No. of days\n 4: for exiting\n";
-    my $check = <STDIN>;
-
-    if($check==1)
-    # writing into the file
-    {
-        print "Enter the number of elements you want to enter : \n";
-        $count = <STDIN>;
-        $i=0;
-        while($count > 0){
-            $i++;
-            print "Enter your name : \n";
-            $firstName = <STDIN>;
-
-            # printing into the excell sheet
-            my $Excelbook = Excel::Writer::XLSX->new( './Book1.xlsx' );
-            my $Excelsheet = $Excelbook->add_worksheet();
-
-            # Writing values at A1 and A2
-            $Excelsheet->write( "A$i", $firstName );
-            $Excelsheet->write( "B$i", 1 );
-
-            # -------------------------------
-            $object1 = new Person ("$firstName", $ssn);    
-            $count --;
+    print "======================================================================\n";
+    print "Enter \n1: enter name list\n2: append names\n3: take attendance\n4: atnd count\n5: exit\n";
+    chomp(my $check = <STDIN>); 
+    nswitch($check) {
+        case 1: { input_names() }
+        case 2: { append_names() }
+        case 3: { take_atnd() }
+        case 4: { atnd_count() }
+        case 5: {
+            print "Terminating...\n";
+            print "======================================================================\n";
+            exit 0; 
         }
-    }
-    elsif($check == 2 ){
-        # reading from the file
-        open(fh, "./Book1.xlsx") or die "File '$filename' can't be opened\n";
-        $i = 0;
-        $firstline = <fh>;
-        
-        printf "The elements in the attendance sheet are : \n";
-        while(<fh>)
-        {
-            
-            print "$_";
-            @attend[$i] = "$_";
-            $i++;
-        }
-        close;
-    }
-    elsif($check == 3){
-        print "welcome to section 3\n";
-        $j=0;
-        $c = 0;
-        $count = 0;
-            
-        open(fh, "./Book1.xlsx") or die "File '$filename' can't be opened\n";
-        my ($lines, $words, $chars) = (0,0,0);
-
-        while (<fh>) {
-            $lines++;
-            $chars += length($_);
-            $words += scalar(split(/\W+/, $_));
-        }
-
-        print("lines=$lines words=$words chars=$chars\n");
-    }else{
-        exit;
+        default:{ print "Error: invald option" }
     }
 }
