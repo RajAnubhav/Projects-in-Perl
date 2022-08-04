@@ -89,6 +89,34 @@ sub take_atnd{
 }
 sub atnd_count{
     # read and calculate atendance
+
+    $nameRow=0;
+    print "Enter name to print attendance: ";
+    chomp($name = <STDIN>);
+    my $converter = Text::Iconv->new("utf-8", "windows-1251");
+    my $excel = Spreadsheet::XLSX->new('atnd.xlsx', $converter);
+    my $sheet = (@{$excel->{Worksheet}})[0];
+    $sheet->{MaxRow} ||= $sheet->{MinRow};
+    foreach my $row (1 .. $sheet->{MaxRow}) {
+        my $cell = $sheet->{Cells}[$row][0];
+        if($name == $cell){
+            $nameRow=$row;
+            break;
+        }
+    }
+    $totalclass=0;
+    $presentclass=0;
+    $sheet->{MaxCol} ||= $sheet->{MinCol};            
+    foreach my $col (1 ..  $sheet->{MaxCol}) {
+        my $cell = $sheet->{Cells}[$nameRow][$col];
+        if($cell){
+            $totalclass++;
+            if($cell=="p"){
+                $presentclass++;
+            }
+        }
+    }
+    print ("%s\n\tTotal no of days: %s \n\tNo of days present: %s\n",$name,$totalclass,$presentclass);
 }
 
 while($ch){
