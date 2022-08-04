@@ -4,6 +4,7 @@ use Spreadsheet::WriteExcel;
 use Spreadsheet::ParseExcel;
 use Spreadsheet::ParseExcel::SaveParser;
 use Spreadsheet::ParseXLSX;
+use Spreadsheet::XLSX;
 use Switch::Plain;
 sub input_names{
     # writing into the file
@@ -57,21 +58,32 @@ sub append_names{
 }
 sub take_atnd{
     #add attendance to the file
+
+    #check which first column is empty
+    my $converter = Text::Iconv->new("utf-8", "windows-1251");
+    my $excel = Spreadsheet::XLSX->new('atnd.xlsx', $converter);    #open the file
+    my $sheet = (@{$excel->{Worksheet}})[0];                        #select the sheet
+    my $col = ($sheet->{MaxCol})+1;                                 #column to take atendance in
+
     print "Enter the date : ";
     chomp($date = <STDIN>);
     $i=0;
     $writeTo=0;
     # printing into the excell sheet
     my $Excelbook = Excel::Writer::XLSX->new( './atnd.xls' );
-    my $Excelsheet = $Excelbook->add_worksheet("Atnd Sheet");
-    $Excelsheet->write($writeTo++,0,"Names" );
-    while($count > 0){
-        $i++;
-        print "Enter your name $i : ";
-        chomp ($firstName = <STDIN>);
-        # Writing values at A1 and A2
-        $Excelsheet->write($writeTo++,0, $firstName );    
-        $count --;
+    my $Excelsheet = $Excelbook->add_worksheet("Atnd Sheet");       #open the worksheet
+    my $sheet =(@{$excel->{Worksheet}})[0];                         #select the worksheet
+    $Excelsheet->write($writeTo++,0, $date );                       #write date as column heading  
+    while(1){                                                       
+        $sheet->{MaxCol} ||= $sheet->{MinCol};            
+        foreach my $col (1 ..  $sheet->{MaxCol}) {                  #loop col 1 to max not 0 coz it has the titke "Name"          
+            my $cell = $sheet->{Cells}[$row][0];                          
+            if ($cell) {                                            #if cell is not empty
+                printf(" %s (p/a): ", $cell->{Val});
+                chomp(my $state = <STDIN>);
+                $Excelsheet->write($writeTo++,$col, $firstName );   #write attendance
+            }        
+        }
     }
     $Excelbook->close();
 }
