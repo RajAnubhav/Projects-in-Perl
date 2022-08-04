@@ -92,31 +92,36 @@ sub atnd_count{
 
     $nameRow=0;
     print "Enter name to print attendance: ";
-    chomp($name = <STDIN>);
+    chomp($name = <STDIN>);                                         #name to find attendance for
     my $converter = Text::Iconv->new("utf-8", "windows-1251");
-    my $excel = Spreadsheet::XLSX->new('atnd.xlsx', $converter);
+    my $excel = Spreadsheet::XLSX->new('atnd.xlsx', $converter);    #open file
     my $sheet = (@{$excel->{Worksheet}})[0];
     $sheet->{MaxRow} ||= $sheet->{MinRow};
-    foreach my $row (1 .. $sheet->{MaxRow}) {
+    foreach my $row (1 .. $sheet->{MaxRow}) {                       #loop in row with the names
         my $cell = $sheet->{Cells}[$row][0];
-        if($name == $cell){
-            $nameRow=$row;
+        if($name == $cell){                                         #if name match found get column number
+            $nameRow=$row;                          
             break;
         }
     }
-    $totalclass=0;
-    $presentclass=0;
-    $sheet->{MaxCol} ||= $sheet->{MinCol};            
-    foreach my $col (1 ..  $sheet->{MaxCol}) {
-        my $cell = $sheet->{Cells}[$nameRow][$col];
-        if($cell){
-            $totalclass++;
-            if($cell=="p"){
-                $presentclass++;
+    if($nameRow==0){
+        print "Name not found in the records";
+    }
+    else{                                                           #if name is found
+        $totalclass=0;
+        $presentclass=0;
+        $sheet->{MaxCol} ||= $sheet->{MinCol};            
+        foreach my $col (1 ..  $sheet->{MaxCol}) {
+            my $cell = $sheet->{Cells}[$nameRow][$col];
+            if($cell){
+                $totalclass++;
+                if($cell=="p"){
+                    $presentclass++;
+                }
             }
         }
+        print ("%s\n\tTotal no of days: %s \n\tNo of days present: %s\n",$name,$totalclass,$presentclass);
     }
-    print ("%s\n\tTotal no of days: %s \n\tNo of days present: %s\n",$name,$totalclass,$presentclass);
 }
 
 while($ch){
